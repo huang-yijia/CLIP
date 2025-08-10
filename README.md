@@ -1,199 +1,218 @@
-# CLIP
+# CLIP Zero-Shot Classification Analysis Project
 
-[[Blog]](https://openai.com/blog/clip/) [[Paper]](https://arxiv.org/abs/2103.00020) [[Model Card]](model-card.md) [[Colab]](https://colab.research.google.com/github/openai/clip/blob/master/notebooks/Interacting_with_CLIP.ipynb)
+## Overview
 
-CLIP (Contrastive Language-Image Pre-Training) is a neural network trained on a variety of (image, text) pairs. It can be instructed in natural language to predict the most relevant text snippet, given an image, without directly optimizing for the task, similarly to the zero-shot capabilities of GPT-2 and 3. We found CLIP matches the performance of the original ResNet50 on ImageNet “zero-shot” without using any of the original 1.28M labeled examples, overcoming several major challenges in computer vision.
+This project demonstrates and analyzes CLIP's (Contrastive Language-Image Pre-Training) zero-shot classification capabilities. Through systematic testing with diverse object images and text prompts, we explore the strengths and limitations of open-vocabulary vision systems.
 
+## 🎯 Project Goals
 
+- **Demonstrate CLIP's zero-shot capabilities** with real object images
+- **Analyze strengths and weaknesses** of open-vocabulary perception
+- **Test diverse text prompts** including specific objects, attributes, and functional descriptions
+- **Provide insights** into the challenges of building comprehensive vision systems
 
-## Approach
+## 📁 Project Structure
 
-![CLIP](CLIP.png)
+```
+CLIP/
+├── clip_zero_shot_test.py      # Main testing script
+├── clip_analysis_results.md    # Detailed analysis report
+├── demo_images/                # Test images (apple, banana, cat, dog, hammer, screwdriver)
+├── clip/                       # CLIP model implementation
+└── README_CLIP_Project.md      # This file
+```
 
+## 🚀 Quick Start
 
+### Prerequisites
 
-## Usage
+- Python 3.9+
+- PyTorch 1.13.1+ with CUDA support
+- CLIP model (ViT-B/32)
 
-First, [install PyTorch 1.7.1](https://pytorch.org/get-started/locally/) (or later) and torchvision, as well as small additional dependencies, and then install this repo as a Python package. On a CUDA GPU machine, the following will do the trick:
+### Installation
 
+1. **Activate the CLIP conda environment:**
+   ```bash
+   conda activate clip
+   ```
+
+2. **Run the zero-shot classification test:**
+   ```bash
+   python clip_zero_shot_test.py
+   ```
+
+## 🔬 Test Methodology
+
+### Images Tested
+- **6 diverse objects**: Apple, Banana, Cat, Dog, Hammer, Screwdriver
+- **Source**: CLIP demo images (high-quality, real photographs)
+
+### Text Prompts (29 total)
+- **Specific objects**: "a photo of a hammer", "a photo of a cat"
+- **Functional descriptions**: "something with a handle", "something you can eat"
+- **Material properties**: "something made of metal", "something with fur"
+- **Color attributes**: "something red", "something orange"
+- **Size descriptions**: "something small", "something large"
+- **Contextual categories**: "something in the kitchen", "something in the garage"
+
+### Analysis Metrics
+- **Confidence scores** for each image-prompt pair
+- **Top matches** for each image and prompt
+- **Strengths identification** (high-confidence matches)
+- **Weaknesses identification** (low-confidence matches)
+- **Ambiguous cases** (multiple high-confidence matches)
+
+## 📊 Key Findings
+
+### ✅ CLIP's Strengths
+
+1. **Excellent Common Object Recognition**
+   - Banana: 97.2% confidence for "a photo of a banana"
+   - Dog: 79.7% confidence for "a photo of a dog"
+   - Cat: 76.9% confidence for "a photo of a cat"
+
+2. **Hierarchical Understanding**
+   - Apple → "fruit" (32.0% confidence)
+   - Cat/Dog → "pet" (12.2% and 11.1% respectively)
+   - Cat/Dog → "animal" (3.4% and 3.2% respectively)
+
+3. **Semantic Relationships**
+   - Apple/Banana → "something you can eat" (5.3% and 0.7%)
+   - Hammer/Screwdriver → "something you can use" (12.9% and 1.6%)
+
+### ❌ CLIP's Weaknesses
+
+1. **Tool Recognition Failures**
+   - Hammer: Only 0.5% confidence for "a photo of a hammer"
+   - Screwdriver: Only 0.1% confidence for "a photo of a screwdriver"
+
+2. **Material Property Confusion**
+   - Screwdriver classified as "something with fur" (28.5% confidence)
+   - Hammer classified as "something with fur" (15.5% confidence)
+
+3. **Attribute Recognition Issues**
+   - Poor color recognition (Apple → "something red" only 2.8%)
+   - Inconsistent size perception
+   - Limited material understanding
+
+## 🔍 Insights for Open-Vocabulary Perception
+
+### Strengths
+- **Natural Language Integration**: Successfully maps text descriptions to visual concepts
+- **Zero-Shot Generalization**: Works without training on specific categories
+- **Semantic Understanding**: Captures functional and categorical relationships
+
+### Limitations
+- **Domain Bias**: Better at common objects than specialized tools
+- **Attribute Recognition**: Struggles with materials, colors, and sizes
+- **Fine-Grained Discrimination**: Poor at distinguishing similar objects
+- **Context Sensitivity**: Performance varies with prompt wording
+
+## 🛠️ Technical Implementation
+
+### Core Components
+
+1. **Image Loading** (`load_images()`)
+   - Loads images from demo_images directory
+   - Handles PIL Image processing
+   - Error handling for corrupted files
+
+2. **CLIP Classification** (`run_clip_classification()`)
+   - Encodes images and text using CLIP
+   - Computes cosine similarities
+   - Returns confidence scores for all image-prompt pairs
+
+3. **Results Analysis** (`analyze_results()`)
+   - Identifies top matches for each image/prompt
+   - Finds strengths and weaknesses
+   - Detects ambiguous cases
+
+### Model Configuration
+- **Model**: CLIP ViT-B/32
+- **Device**: CUDA GPU (with CPU fallback)
+- **Preprocessing**: CLIP's standard image transforms
+
+## 📈 Usage Examples
+
+### Running the Full Test
 ```bash
-$ conda install --yes -c pytorch pytorch=1.7.1 torchvision cudatoolkit=11.0
-$ pip install ftfy regex tqdm
-$ pip install git+https://github.com/openai/CLIP.git
+python clip_zero_shot_test.py
 ```
 
-Replace `cudatoolkit=11.0` above with the appropriate CUDA version on your machine or `cpuonly` when installing on a machine without a GPU.
+### Expected Output
+```
+Using device: cuda
+CLIP model loaded successfully!
+Loaded: dog, cat, screwdriver, banana, apple, hammer
+Testing with 29 text prompts
 
-```python
-import torch
-import clip
-from PIL import Image
+================================================================================
+CLIP ZERO-SHOT CLASSIFICATION RESULTS
+================================================================================
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
+TOP MATCHES FOR EACH IMAGE:
+--------------------------------------------------
+DOG:
+  0.797: a photo of a dog
+  0.111: a photo of a pet
+  0.032: a photo of an animal
 
-image = preprocess(Image.open("CLIP.png")).unsqueeze(0).to(device)
-text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
+[Additional results...]
 
-with torch.no_grad():
-    image_features = model.encode_image(image)
-    text_features = model.encode_text(text)
-    
-    logits_per_image, logits_per_text = model(image, text)
-    probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+ANALYSIS OF CLIP'S STRENGTHS & WEAKNESSES:
+--------------------------------------------------
+STRENGTHS (High confidence matches):
+  ✓ banana → 'a photo of a banana' (confidence: 0.972)
+  ✓ dog → 'a photo of a dog' (confidence: 0.797)
+  ✓ cat → 'a photo of a cat' (confidence: 0.769)
 
-print("Label probs:", probs)  # prints: [[0.9927937  0.00421068 0.00299572]]
+WEAKNESSES (Low confidence matches):
+  ✗ hammer → 'a photo of a hammer' (confidence: 0.005)
+  ✗ screwdriver → 'a photo of a screwdriver' (confidence: 0.001)
 ```
 
+## 🎓 Educational Value
 
-## API
+This project serves as an excellent learning resource for:
 
-The CLIP module `clip` provides the following methods:
+- **Computer Vision Students**: Understanding zero-shot learning
+- **ML Researchers**: Analyzing model limitations and biases
+- **Practitioners**: Learning about prompt engineering for vision models
+- **Educators**: Demonstrating the challenges of open-vocabulary perception
 
-#### `clip.available_models()`
+## 🔮 Future Work
 
-Returns the names of the available CLIP models.
+Potential extensions and improvements:
 
-#### `clip.load(name, device=..., jit=False)`
+1. **More Diverse Images**: Test with different object categories
+2. **Prompt Engineering**: Experiment with different prompt templates
+3. **Multi-Modal Analysis**: Combine with other vision models
+4. **Bias Analysis**: Investigate demographic and cultural biases
+5. **Real-World Testing**: Apply to practical use cases
 
-Returns the model and the TorchVision transform needed by the model, specified by the model name returned by `clip.available_models()`. It will download the model as necessary. The `name` argument can also be a path to a local checkpoint.
+## 📚 References
 
-The device to run the model can be optionally specified, and the default is to use the first CUDA device if there is any, otherwise the CPU. When `jit` is `False`, a non-JIT version of the model will be loaded.
+- [CLIP Paper](https://arxiv.org/abs/2103.00020)
+- [OpenAI CLIP Repository](https://github.com/openai/CLIP)
+- [CLIP Model Card](model-card.md)
 
-#### `clip.tokenize(text: Union[str, List[str]], context_length=77)`
+## 🤝 Contributing
 
-Returns a LongTensor containing tokenized sequences of given text input(s). This can be used as the input to the model
+This is a demonstration project, but suggestions and improvements are welcome:
+
+1. Test with additional images
+2. Experiment with different prompts
+3. Analyze results with different CLIP models
+4. Extend the analysis framework
+
+## 📄 License
+
+This project follows the same license as the original CLIP repository. See [LICENSE](LICENSE) for details.
 
 ---
 
-The model returned by `clip.load()` supports the following methods:
-
-#### `model.encode_image(image: Tensor)`
-
-Given a batch of images, returns the image features encoded by the vision portion of the CLIP model.
-
-#### `model.encode_text(text: Tensor)`
-
-Given a batch of text tokens, returns the text features encoded by the language portion of the CLIP model.
-
-#### `model(image: Tensor, text: Tensor)`
-
-Given a batch of images and a batch of text tokens, returns two Tensors, containing the logit scores corresponding to each image and text input. The values are cosine similarities between the corresponding image and text features, times 100.
-
-
-
-## More Examples
-
-### Zero-Shot Prediction
-
-The code below performs zero-shot prediction using CLIP, as shown in Appendix B in the paper. This example takes an image from the [CIFAR-100 dataset](https://www.cs.toronto.edu/~kriz/cifar.html), and predicts the most likely labels among the 100 textual labels from the dataset.
-
-```python
-import os
-import clip
-import torch
-from torchvision.datasets import CIFAR100
-
-# Load the model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load('ViT-B/32', device)
-
-# Download the dataset
-cifar100 = CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=False)
-
-# Prepare the inputs
-image, class_id = cifar100[3637]
-image_input = preprocess(image).unsqueeze(0).to(device)
-text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in cifar100.classes]).to(device)
-
-# Calculate features
-with torch.no_grad():
-    image_features = model.encode_image(image_input)
-    text_features = model.encode_text(text_inputs)
-
-# Pick the top 5 most similar labels for the image
-image_features /= image_features.norm(dim=-1, keepdim=True)
-text_features /= text_features.norm(dim=-1, keepdim=True)
-similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
-values, indices = similarity[0].topk(5)
-
-# Print the result
-print("\nTop predictions:\n")
-for value, index in zip(values, indices):
-    print(f"{cifar100.classes[index]:>16s}: {100 * value.item():.2f}%")
-```
-
-The output will look like the following (the exact numbers may be slightly different depending on the compute device):
-
-```
-Top predictions:
-
-           snake: 65.31%
-          turtle: 12.29%
-    sweet_pepper: 3.83%
-          lizard: 1.88%
-       crocodile: 1.75%
-```
-
-Note that this example uses the `encode_image()` and `encode_text()` methods that return the encoded features of given inputs.
-
-
-### Linear-probe evaluation
-
-The example below uses [scikit-learn](https://scikit-learn.org/) to perform logistic regression on image features.
-
-```python
-import os
-import clip
-import torch
-
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
-from tqdm import tqdm
-
-# Load the model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load('ViT-B/32', device)
-
-# Load the dataset
-root = os.path.expanduser("~/.cache")
-train = CIFAR100(root, download=True, train=True, transform=preprocess)
-test = CIFAR100(root, download=True, train=False, transform=preprocess)
-
-
-def get_features(dataset):
-    all_features = []
-    all_labels = []
-    
-    with torch.no_grad():
-        for images, labels in tqdm(DataLoader(dataset, batch_size=100)):
-            features = model.encode_image(images.to(device))
-
-            all_features.append(features)
-            all_labels.append(labels)
-
-    return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
-
-# Calculate the image features
-train_features, train_labels = get_features(train)
-test_features, test_labels = get_features(test)
-
-# Perform logistic regression
-classifier = LogisticRegression(random_state=0, C=0.316, max_iter=1000, verbose=1)
-classifier.fit(train_features, train_labels)
-
-# Evaluate using the logistic regression classifier
-predictions = classifier.predict(test_features)
-accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
-print(f"Accuracy = {accuracy:.3f}")
-```
-
-Note that the `C` value should be determined via a hyperparameter sweep using a validation split.
-
-
-## See Also
-
-* [OpenCLIP](https://github.com/mlfoundations/open_clip): includes larger and independently trained CLIP models up to ViT-G/14
-* [Hugging Face implementation of CLIP](https://huggingface.co/docs/transformers/model_doc/clip): for easier integration with the HF ecosystem
+**Project Status**: ✅ Complete  
+**Last Updated**: August 2025  
+**CLIP Version**: ViT-B/32  
+**Test Images**: 6 objects, 29 prompts 
