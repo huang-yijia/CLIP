@@ -205,14 +205,3 @@ This is a demonstration project, but suggestions and improvements are welcome:
 2. Experiment with different prompts
 3. Analyze results with different CLIP models
 4. Extend the analysis framework
-
-## 📄 License
-
-This project follows the same license as the original CLIP repository. See [LICENSE](LICENSE) for details.
-
----
-
-**Project Status**: ✅ Complete  
-**Last Updated**: August 2025  
-**CLIP Version**: ViT-B/32  
-**Test Images**: 6 objects, 29 prompts 
